@@ -15,7 +15,12 @@ public class ConfirmTopUpCommandHandler(IUnitOfWork unitOfWork, IPaymentService 
         var topUp = await unitOfWork.TopUpRequests.GetByIdAsync(command.TopUpRequestId, cancellationToken)
                    ?? throw new KeyNotFoundException("Top-up request not found.");
 
-        if (string.IsNullOrWhiteSpace(topUp.StripePaymentIntentId))
+        if (topUp.Status == TopUpStatus.Completed)
+        {
+            return true;
+        }
+
+        if (topUp.Status == TopUpStatus.Failed || string.IsNullOrWhiteSpace(topUp.StripePaymentIntentId))
         {
             return false;
         }
