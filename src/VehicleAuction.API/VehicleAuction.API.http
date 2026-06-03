@@ -1,0 +1,6 @@
+@VehicleAuction.API_HostAddress = http://localhost:5115
+
+GET {{VehicleAuction.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
