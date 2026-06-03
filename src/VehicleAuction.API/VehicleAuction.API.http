@@ -1,6 +1,6 @@
 @VehicleAuction.API_HostAddress = http://localhost:5115
 
-GET {{VehicleAuction.API_HostAddress}}/weatherforecast/
+GET {{VehicleAuction.API_HostAddress}}/swagger/v1/swagger.json
 Accept: application/json
 
 ###
