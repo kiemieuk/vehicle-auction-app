@@ -17,7 +17,8 @@ public class EndAuctionCommandHandler(IUnitOfWork unitOfWork, ITokenService toke
             return false;
         }
 
-        var highestBid = await unitOfWork.Bids.GetHighestBidAsync(command.AuctionId, cancellationToken);
+        var allBids = (await unitOfWork.Bids.GetByAuctionIdAsync(command.AuctionId, cancellationToken)).ToList();
+        var highestBid = allBids.OrderByDescending(x => x.TokenAmount).ThenBy(x => x.PlacedAt).FirstOrDefault();
 
         if (highestBid is not null)
         {
@@ -25,14 +26,20 @@ public class EndAuctionCommandHandler(IUnitOfWork unitOfWork, ITokenService toke
             auction.FinalTokenAmount = highestBid.TokenAmount;
             await tokenService.DeductTokensAsync(highestBid.UserId, highestBid.TokenAmount, cancellationToken);
 
-            var losingBids = (await unitOfWork.Bids.GetByAuctionIdAsync(command.AuctionId, cancellationToken))
-                .Where(b => b.UserId != highestBid.UserId)
+            var reservedByUser = allBids
                 .GroupBy(b => b.UserId)
-                .Select(g => new { UserId = g.Key, Amount = g.Max(x => x.TokenAmount) });
+                .Select(g => new { UserId = g.Key, ReservedAmount = g.Sum(x => x.TokenAmount) });
 
-            foreach (var bid in losingBids)
+            foreach (var userReserve in reservedByUser)
             {
-                await tokenService.RefundTokensAsync(bid.UserId, bid.Amount, cancellationToken);
+                var refundableAmount = userReserve.UserId == highestBid.UserId
+                    ? userReserve.ReservedAmount - highestBid.TokenAmount
+                    : userReserve.ReservedAmount;
+
+                if (refundableAmount > 0)
+                {
+                    await tokenService.RefundTokensAsync(userReserve.UserId, refundableAmount, cancellationToken);
+                }
             }
         }
 

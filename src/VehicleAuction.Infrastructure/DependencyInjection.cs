@@ -17,7 +17,13 @@ public static class DependencyInjection
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")
                 ?? @"Server=(localdb)\mssqllocaldb;Database=VehicleAuctionDb;Trusted_Connection=True;TrustServerCertificate=True"));
 
-        Stripe.StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"] ?? "sk_test_placeholder";
+        var stripeSecretKey = configuration["Stripe:SecretKey"];
+        if (string.IsNullOrWhiteSpace(stripeSecretKey))
+        {
+            throw new InvalidOperationException("Stripe secret key is not configured.");
+        }
+
+        Stripe.StripeConfiguration.ApiKey = stripeSecretKey;
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IVehicleRepository, VehicleRepository>();

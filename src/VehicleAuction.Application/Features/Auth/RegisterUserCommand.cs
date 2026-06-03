@@ -1,6 +1,5 @@
 using MediatR;
-using System.Security.Cryptography;
-using System.Text;
+using VehicleAuction.Application.Common;
 using VehicleAuction.Application.DTOs.Auth;
 using VehicleAuction.Domain.Entities;
 using VehicleAuction.Domain.Enums;
@@ -25,7 +24,7 @@ public class RegisterUserCommandHandler(IUnitOfWork unitOfWork) : IRequestHandle
             FirstName = command.Request.FirstName,
             LastName = command.Request.LastName,
             Email = command.Request.Email,
-            PasswordHash = ComputeHash(command.Request.Password),
+            PasswordHash = PasswordHasher.Hash(command.Request.Password),
             Role = UserRole.Bidder,
             TokenBalance = 0m
         };
@@ -34,11 +33,5 @@ public class RegisterUserCommandHandler(IUnitOfWork unitOfWork) : IRequestHandle
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return user.Id;
-    }
-
-    private static string ComputeHash(string input)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-        return Convert.ToHexString(bytes);
     }
 }

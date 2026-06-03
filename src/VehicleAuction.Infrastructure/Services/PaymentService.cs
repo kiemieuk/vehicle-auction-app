@@ -18,7 +18,7 @@ public class PaymentService : IPaymentService
             }
         }, cancellationToken: cancellationToken);
 
-        return intent.ClientSecret ?? intent.Id;
+        return intent.ClientSecret ?? throw new InvalidOperationException("Stripe did not return a payment client secret.");
     }
 
     public async Task<bool> VerifyPaymentAsync(string paymentReference, CancellationToken cancellationToken = default)

@@ -1,6 +1,5 @@
 using MediatR;
-using System.Security.Cryptography;
-using System.Text;
+using VehicleAuction.Application.Common;
 using VehicleAuction.Application.DTOs.Auth;
 using VehicleAuction.Application.Interfaces;
 using VehicleAuction.Domain.Interfaces;
@@ -16,8 +15,7 @@ public class LoginUserCommandHandler(IUnitOfWork unitOfWork, IJwtService jwtServ
         var user = await unitOfWork.Users.GetByEmailAsync(command.Request.Email, cancellationToken)
                    ?? throw new UnauthorizedAccessException("Invalid credentials.");
 
-        var hashedPassword = ComputeHash(command.Request.Password);
-        if (!string.Equals(user.PasswordHash, hashedPassword, StringComparison.OrdinalIgnoreCase))
+        if (!PasswordHasher.Verify(command.Request.Password, user.PasswordHash))
         {
             throw new UnauthorizedAccessException("Invalid credentials.");
         }
@@ -31,11 +29,5 @@ public class LoginUserCommandHandler(IUnitOfWork unitOfWork, IJwtService jwtServ
             Role = user.Role,
             Token = jwtService.GenerateToken(user)
         };
-    }
-
-    private static string ComputeHash(string input)
-    {
-        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(input));
-        return Convert.ToHexString(bytes);
     }
 }

@@ -12,7 +12,12 @@ public class JwtService(IConfiguration configuration) : IJwtService
 {
     public string GenerateToken(User user)
     {
-        var key = configuration["Jwt:Key"] ?? "development-super-secret-key-change-me";
+        var key = configuration["Jwt:Key"];
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            throw new InvalidOperationException("JWT signing key is not configured.");
+        }
+
         var issuer = configuration["Jwt:Issuer"] ?? "VehicleAuction";
         var audience = configuration["Jwt:Audience"] ?? "VehicleAuction.Client";
 
