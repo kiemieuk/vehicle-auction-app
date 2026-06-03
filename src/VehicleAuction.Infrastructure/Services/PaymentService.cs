@@ -21,10 +21,20 @@ public class PaymentService : IPaymentService
         return intent.ClientSecret ?? throw new InvalidOperationException("Stripe did not return a payment client secret.");
     }
 
-    public async Task<bool> VerifyPaymentAsync(string paymentReference, CancellationToken cancellationToken = default)
+public async Task<bool> VerifyPaymentAsync(string paymentReference, CancellationToken cancellationToken = default)
+{
+    // Accept either a PaymentIntent id (pi_...) or a client secret (pi_..._secret_...)
+    var intentId = paymentReference;
+    const string secretMarker = "_secret_";
+    var idx = paymentReference.IndexOf(secretMarker, StringComparison.Ordinal);
+    if (idx > 0)
     {
-        var service = new PaymentIntentService();
-        var intent = await service.GetAsync(paymentReference, cancellationToken: cancellationToken);
-        return string.Equals(intent.Status, "succeeded", StringComparison.OrdinalIgnoreCase);
+        intentId = paymentReference[..idx];
+    }
+
+    var service = new PaymentIntentService();
+    var intent = await service.GetAsync(intentId, cancellationToken: cancellationToken);
+    return string.Equals(intent.Status, "succeeded", StringComparison.OrdinalIgnoreCase);
+}
     }
 }
