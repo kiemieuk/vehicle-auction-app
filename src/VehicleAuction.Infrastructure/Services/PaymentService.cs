@@ -10,7 +10,7 @@ public class PaymentService : IPaymentService
         var service = new PaymentIntentService();
         var intent = await service.CreateAsync(new PaymentIntentCreateOptions
         {
-            Amount = (long)(amount * 100),
+            Amount = decimal.ToInt64(decimal.Round(amount * 100m, 0, MidpointRounding.AwayFromZero)),
             Currency = currency,
             AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
             {
