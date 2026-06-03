@@ -28,7 +28,17 @@ public class TokenService(IUnitOfWork unitOfWork, IPaymentService paymentService
     public async Task<bool> ConfirmTopUpAsync(Guid topUpRequestId, CancellationToken cancellationToken = default)
     {
         var topUpRequest = await unitOfWork.TopUpRequests.GetByIdAsync(topUpRequestId, cancellationToken);
-        if (topUpRequest is null || string.IsNullOrWhiteSpace(topUpRequest.StripePaymentIntentId))
+        if (topUpRequest is null)
+        {
+            return false;
+        }
+
+        if (topUpRequest.Status == TopUpStatus.Completed)
+        {
+            return true;
+        }
+
+        if (topUpRequest.Status == TopUpStatus.Failed || string.IsNullOrWhiteSpace(topUpRequest.StripePaymentIntentId))
         {
             return false;
         }
